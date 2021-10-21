@@ -52,7 +52,7 @@ then
                 do
                         case $opt in
                                 "Adicionar lista aleatoria de servidores proxy 1")
-                                echo -n "digite o numero de servidores proxys que deseja: "
+                                echo -n "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
                                 read Nproxys
                                 echo $Nproxys
                                 rm -f /tmp/proxychainss.txt
@@ -71,8 +71,24 @@ then
                                 echo -n "| HTTP | SOCKS4 | SOCKS5 |"
                                 read tipoProxy
 
-                                if []
+                                echo -n "escolher o nivel de anonimidade:"
+                                echo -n "| todas | elite | anonimo | transparente |"
+                                read anomProxy
+                                
+                                echo -n "SSL:"
+                                echo -n "| tudo | sim | nao |"
+                                read SSLproxy
 
+                                echo -n "Timeout, em milissegundos: "
+                                echo -n "50ms - 10000ms (apenas o numero)"
+                                read pingProxy
+
+                                if [tipoProxy -eq "HTTP"]
+                                then
+                                echo "DENTRO DO IF"
+                                read
+
+                                fi
 
                                 ;;
 
@@ -98,7 +114,7 @@ then
                 do
                         case $opt in
                                 "Adicionar lista aleatoria de servidores proxy 1")
-                                echo -n "digite o numero de servidores proxys que deseja: "
+                                echo -n "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
                                 read Nproxys
                                 echo $Nproxys
                                 rm -f /tmp/proxychainss.txt
