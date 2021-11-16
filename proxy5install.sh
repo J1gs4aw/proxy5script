@@ -46,18 +46,18 @@ then
                 apt install proxychains -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
                 #dpkg -l  | grep proxychains 
 
-                PS3="Escolha uma opcao: "
+                PS3="Escolha uma opcao (opcao 1 recomendada por apresentar maior seguranca): "
                 options=("Adicionar lista aleatoria de servidores proxy 1" "Definir opcoes de proxys 2" "Sair 3")
                 select opt in "${options[@]}"
                 do
                         case $opt in
                                 "Adicionar lista aleatoria de servidores proxy 1")
-                                echo -n "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
+                                echo "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
                                 read Nproxys
                                 echo $Nproxys
                                 rm -f /tmp/proxychainss.txt
                                 wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies\&protocol=socks5\&timeout=10000\&country=all
-                                sed 's/^/socket4 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
+                                sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
                                 #echo "proxys editados: " $variavel
                                 head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
                                 rm -f /tmp/proxychainss.txt
@@ -66,30 +66,39 @@ then
                                 tail -n $Nproxys /etc/proxychains4.conf
                                 ;;
 
-                                "Definir opcoes de proxy 2")
-                                echo -n "escolher o tipo de servidor proxy:"
-                                echo -n "| HTTP | SOCKS4 | SOCKS5 |"
+                                "Definir opcoes de proxys 2")
+                                echo "escolher o tipo de servidor proxy:"
+                                echo "| http | socks4 | socks5 |"
                                 read tipoProxy
 
-                                echo -n "escolher o nivel de anonimidade:"
-                                echo -n "| todas | elite | anonimo | transparente |"
+                                echo "escolher o nivel de anonimidade:"
+                                echo "| todas | elite | anonimo | transparente |"
                                 read anomProxy
                                 
-                                echo -n "SSL:"
-                                echo -n "| tudo | sim | nao |"
+                                echo "SSL:"
+                                echo "| tudo | sim | nao |"
                                 read SSLproxy
 
-                                echo -n "Timeout, em milissegundos: "
-                                echo -n "50ms - 10000ms (apenas o numero)"
+                                echo "Timeout, em milissegundos: "
+                                echo "50ms - 10000ms (apenas o numero)"
                                 read pingProxy
 
-                                if [tipoProxy -eq "HTTP"]
-                                then
-                                echo "DENTRO DO IF"
-                                read
+                                echo "digite o numero de servidores proxys que deseja: "
+                                read Nproxys
+                                echo $Nproxys
 
-                                fi
+                                
 
+                                echo https://api.proxyscrape.com/v2/?request=getproxies&protocol=$tipoProxy&timeout=$pingProxy&country=all&ssl=$SSLproxy&anonymity=$anomProxy
+
+                                sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
+                                #echo "proxys editados: " $variavel
+                                head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
+                                rm -f /tmp/proxychainss.txt
+                                rm -f /tmp/proxychains.txt
+                                echo "Servidores adicionados: "
+                                tail -n $Nproxys /etc/proxychains4.conf                            
+                                
                                 ;;
 
                                 "Sair 3")
@@ -114,12 +123,12 @@ then
                 do
                         case $opt in
                                 "Adicionar lista aleatoria de servidores proxy 1")
-                                echo -n "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
+                                echo "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
                                 read Nproxys
                                 echo $Nproxys
                                 rm -f /tmp/proxychainss.txt
                                 wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies\&protocol=socks5\&timeout=10000\&country=all
-                                sed 's/^/socket4 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
+                                sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
                                 #echo "proxys editados: " $variavel
                                 head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
                                 rm -f /tmp/proxychainss.txt
