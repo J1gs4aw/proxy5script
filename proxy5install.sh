@@ -52,13 +52,12 @@ then
                 do
                         case $opt in
                                 "Adicionar lista aleatoria de servidores proxy 1")
-                                echo "digite o numero de servidores proxys que deseja (SOCKS5 por padrao): "
+                                echo "digite o numero de servidores proxys que deseja, apenas o numero, sem espacos ou caracteres especiais (SOCKS5 por padrao): "
                                 read Nproxys
                                 echo $Nproxys
                                 rm -f /tmp/proxychainss.txt
                                 wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies\&protocol=socks5\&timeout=10000\&country=all
                                 sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
-                                #echo "proxys editados: " $variavel
                                 head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
                                 rm -f /tmp/proxychainss.txt
                                 rm -f /tmp/proxychains.txt
@@ -68,31 +67,35 @@ then
 
                                 "Definir opcoes de proxys 2")
                                 echo "escolher o tipo de servidor proxy:"
-                                echo "| http | socks4 | socks5 |"
+                                echo "HTTP      (1)"
+                                echo "SOCKS4    (2)" 
+                                echo "SOCKS5    (3)"
                                 read tipoProxy
 
                                 echo "escolher o nivel de anonimidade:"
-                                echo "| todas | elite | anonimo | transparente |"
+                                echo "TODAS             (1)"
+                                echo "ELITE             (2)"
+                                echo "ANONIMO           (3)"
+                                echo "TRANSPARENTE      (4)"
                                 read anomProxy
                                 
-                                echo "SSL:"
-                                echo "| tudo | sim | nao |"
+                                echo "SSL       (1)"
+                                echo "tudo      (2)"
+                                echo "sim       (3)"
+                                echo "nao       (4)"
                                 read SSLproxy
 
                                 echo "Timeout, em milissegundos: "
-                                echo "50ms - 10000ms (apenas o numero)"
+                                echo "50ms - 10000ms (apenas o numero, sem espacos ou caracteres especiais)"
                                 read pingProxy
 
-                                echo "digite o numero de servidores proxys que deseja: "
+                                echo "digite o numero de servidores proxys que deseja (apenas o numero, sem espacos ou caracteres especiais): "
                                 read Nproxys
                                 echo $Nproxys
 
-                                
-
-                                echo https://api.proxyscrape.com/v2/?request=getproxies&protocol=$tipoProxy&timeout=$pingProxy&country=all&ssl=$SSLproxy&anonymity=$anomProxy
-
+                                rm -f /tmp/proxychainss.txt
+                                wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies&protocol=$tipoProxy&timeout=$pingProxy&country=all&ssl=$SSLproxy&anonymity=$anomProxy
                                 sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
-                                #echo "proxys editados: " $variavel
                                 head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
                                 rm -f /tmp/proxychainss.txt
                                 rm -f /tmp/proxychains.txt
@@ -129,7 +132,6 @@ then
                                 rm -f /tmp/proxychainss.txt
                                 wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies\&protocol=socks5\&timeout=10000\&country=all
                                 sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
-                                #echo "proxys editados: " $variavel
                                 head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
                                 rm -f /tmp/proxychainss.txt
                                 rm -f /tmp/proxychains.txt
