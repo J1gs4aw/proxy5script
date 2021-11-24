@@ -46,7 +46,7 @@ then
                 apt install proxychains -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
                 #dpkg -l  | grep proxychains 
 
-                PS3="Escolha uma opcao (opcao 1 recomendada por apresentar maior seguranca): "
+                PS3="Escolha uma opcao (opcao 1 recomendada por apresentar maior seguranca e facilidade): "
                 options=("Adicionar lista aleatoria de servidores proxy 1" "Definir opcoes de proxys 2" "Sair 3")
                 select opt in "${options[@]}"
                 do
@@ -63,31 +63,124 @@ then
                                 rm -f /tmp/proxychains.txt
                                 echo "Servidores adicionados: "
                                 tail -n $Nproxys /etc/proxychains4.conf
+                                exit
                                 ;;
 
                                 "Definir opcoes de proxys 2")
-                                echo "escolher o tipo de servidor proxy:"
+                                
+                                while [ "$tipoProxy" != "1" ] && [ "$tipoProxy" != "2" ] && [ "$tipoProxy" != "3" ]
+                                do 
+                                echo "escolher o tipo de servidor proxy (utilizar o numero da opcao desejada):"
                                 echo "HTTP      (1)"
                                 echo "SOCKS4    (2)" 
                                 echo "SOCKS5    (3)"
                                 read tipoProxy
 
-                                echo "escolher o nivel de anonimidade:"
-                                echo "TODAS             (1)"
-                                echo "ELITE             (2)"
-                                echo "ANONIMO           (3)"
-                                echo "TRANSPARENTE      (4)"
-                                read anomProxy
-                                
-                                echo "SSL       (1)"
-                                echo "tudo      (2)"
-                                echo "sim       (3)"
-                                echo "nao       (4)"
-                                read SSLproxy
+                                if [ $tipoProxy -eq 1 ]
+                                then
+                                tipoProxy="http"
+                                break
 
-                                echo "Timeout, em milissegundos: "
+                                elif [ $tipoProxy -eq 2 ]
+                                then
+                                tipoProxy="socks4"
+                                break
+
+                                elif [ $tipoProxy -eq 3 ]
+                                then
+                                tipoProxy="socks5"
+                                break
+
+                                else
+                                echo "favor utilizar um dos valores "
+
+                                fi
+                                done
+                                
+                                if [ "$tipoProxy" == "http" ]
+                                then
+                                        while [ "$anomProxy" != "1" ] && [ "$anomProxy" != "2" ] && [ "$anomProxy" != "3" ] && [ "$anomProxy" != "4" ]
+                                        do 
+                                        echo "escolher o nivel de anonimidade(utilizar o numero da opcao desejada):"
+                                        echo "TODAS             (1)"
+                                        echo "ELITE             (2)"
+                                        echo "ANONIMO           (3)"
+                                        echo "TRANSPARENTE      (4)"
+                                        read anomProxy
+
+                                        if [ $anomProxy -eq 1 ]
+                                        then
+                                        anomProxy="all"
+                                        break
+
+                                        elif [ $anomProxy -eq 2 ]
+                                        then
+                                        anomProxy="elite"
+                                        break
+
+                                        elif [ $anomProxy -eq 3 ]
+                                        then
+                                        anomProxy="anonymous"
+                                        break
+
+                                        elif [ $anomProxy -eq 4 ]
+                                        then
+                                        anomProxy="transparent"
+                                        break
+
+                                        else
+                                        echo "favor utilizar um dos valores "
+
+                                        fi
+                                        done
+                                fi
+
+                                if [ "$tipoProxy" == "http" ]
+                                then
+                                        while [ "$SSLproxy" != "1" ] && [ "$SSLproxy" != "2" ] && [ "$SSLproxy" != "3" ]
+                                        do
+                                        echo " (utilizar o numero da opcao desejada):"
+                                        echo "TUDO     (1)"
+                                        echo "SIM      (2)"
+                                        echo "NAO      (3)"
+                                        read SSLproxy
+                                        
+                                        if [ $SSLproxy -eq 1 ]
+                                        then
+                                        SSLproxy="all"
+                                        break
+
+                                        elif [ $SSLproxy -eq 2 ]
+                                        then
+                                        SSLproxy="yes"
+                                        break
+
+                                        elif [ $SSLproxy -eq 3 ]
+                                        then
+                                        SSLproxy="no"
+                                        break
+
+                                        else
+                                        echo "favor utilizar um dos valores "
+
+                                        fi
+                                        done
+                                fi
+
+                                while [ "$pingProxy" == "" ]
+                                do
+                                echo "Timeout, em milissegundos (quanto menor o numero, menos proxys poderao estar disponiveis): "
                                 echo "50ms - 10000ms (apenas o numero, sem espacos ou caracteres especiais)"
                                 read pingProxy
+
+                                if [ "$pingProxy" -gt "50" ] && [ "$pingProxy" -lt "10000" ]
+                                then
+                                break
+                                
+                                fi
+                                pingProxy=""
+
+                                done
 
                                 echo "digite o numero de servidores proxys que deseja (apenas o numero, sem espacos ou caracteres especiais): "
                                 read Nproxys
@@ -101,11 +194,10 @@ then
                                 rm -f /tmp/proxychains.txt
                                 echo "Servidores adicionados: "
                                 tail -n $Nproxys /etc/proxychains4.conf                            
-                                
                                 ;;
 
                                 "Sair 3")
-                                echo "saiu"
+                                echo "saindo..."
                                 break
                                 ;;
 
