@@ -1,4 +1,16 @@
 #!/bin/bash
+# 
+##########################################################################
+#                                    change logs 
+##########################################################################
+# alteracoes na validação do sistemas operacionais Debian ubuntu etc..
+# alteração do log 
+# validação de o pacote foi instalado com sucesso var $PACOTE e versao instalada $VERSION_PROXYFIVE
+# Criacao de funcoes para validação de sistema operacional e instalação do proxychayns
+#
+# falta
+# - fazer a validação dos outros s.o centos 6 e 7 
+# - testar com outros systemas operacionais 
 #colors
         Black='\033[0;30m'        # Black
         Red='\033[0;31m'          # Red
@@ -8,21 +20,69 @@
         Purple='\033[0;35m'       # Purple
         Cyan='\033[0;36m'         # Cyan
         White='\033[0;37m'        # White
-barra="############################################################################"
+barra="####################################################################################"
 echo $barra
-echo -e  "                 $Green  automatizador de proxychains
-$Yellow
-                                             __   _
-      _ __    _ __    ___   __  __  _   _   / _| (_) __   __   ___
-     | '_ \  | '__|  / _ \  \ \/ / | | | | | |_  | | \ \ / /  / _ \
-     | |_) | | |    | (_) |  >  <  | |_| | |  _| | |  \ V /  |  __/
-     | .__/  |_|     \___/  /_/\_\  \__, | |_|   |_|   \_/    \___|
-     |_|                            |___/
+echo -e  "                 $Green  AUTOMATIZADOR DE PROXYCHAYNS
+$Blue
+ ____  ____   _____  ____   _______ _____     _______ 
+|  _ \|  _ \ / _ \ \/ /\ \ / /  ___|_ _\ \   / / ____|
+| |_) | |_) | | | \  /  \ V /| |_   | | \ \ / /|  _|  
+|  __/|  _ <| |_| /  \   | | |  _|  | |  \ V / | |___ 
+|_|   |_| \_\\___/_/\_\  |_| |_|   |___|  \_/  |_____|
                                                        $White wwww.proxyfive.com.br
-                                                        Usuario $USER
                                                         Data `date +%D`
-                                                        versão 1.0
+                                                        versão 2.0
 "
+echo $barra
+
+##VARIAVEIS GLOBAIS 
+#so 
+ID=`grep -e  ^ID /etc/os-release | sed 's/ID=//g' | grep -v ID_LIKE`
+ID_LIKE=`grep -e  ID_LIKE /etc/os-release | tr -d "A-Z_="'"' | awk '{ print $1'}`
+VERSION=`grep -e  ^PRETTY_NAME /etc/os-release |  sed 's/PRETTY_NAME="//g'`
+VERSION_SO=`cat /etc/os-release | sed 's/ID=//g' | grep "VERSION" | tr -d "A-Z_="'"' | awk '{ print $1}' | uniq`
+
+## Funcoes 
+##validar se o proxychayns foi instalado (Debian)
+
+validador_debian() 
+	{
+	echo "Sistema operacional compativel"
+    echo "Instalando o proxychains"
+    apt install proxychains curl wget -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
+	PACOTE=`dpkg -l proxychains | grep -i "proxychains" | awk '{print $2}'`
+	VERSION_PROXYCHAYNS=`dpkg -l proxychains | grep -i "proxychains" | awk '{print $3}'`
+	
+	if [[ $PACOTE = "proxychains" ]]
+	then 
+		echo "Pacote instalado com sucesso $PACOTE versão $VERSION_PROXYCHAYNS"
+	else 
+		echo "Pacote não instalado por favor, verifique o arquivo de log /tmp/log_apt.txt"]
+	fi
+}
+##validar se o proxychayns foi instalado (Redhat)
+
+validador_redhat() 
+{		
+if [ $ID_LIKE = "rhel" ] && [ $VERSION_SO = "8" ];
+then 
+	echo -e "$Green Sistema operacional compativel"
+	echo "iniciando a instalação dos pacotes necessários"
+	yum install curl wget -y
+	cd /tmp/ && wget https://pkgs.dyn.su/el8/base/x86_64/proxychains-ng-4.13-4.el8.x86_64.rpm && yum install -y proxychains-ng*.rpm 1> /tmp/log_apt.txt  2> /tmp/log_yum_erro.txt
+
+#validando de foi instalado 
+	PACOTE=`rpm -qi proxychains-ng | head -n1 | awk '{print $3'}`
+	VERSION_PROXYCHAYNS=`rpm -qi proxychains-ng  | grep "Version" | awk '{ print $3 }'`
+	
+#if [[ $PACOTE = "proxychains-ng" ]]
+#then
+	echo "Pacote instalado com sucesso $PACOTE versão:$VERSION_PROXYCHAYNS"
+	 
+else 
+	echo "Pacote não instalado por favor, verifique o arquivo de log /tmp/log_yum_erro.txt"
+fi
+}
 
 if [[ $EUID != 0 ]]
 then
@@ -31,23 +91,19 @@ then
 
 elif [[ $EUID -eq 0 ]]
 then
-        #verificando a versao do so
-        RELEASE=`cat  /etc/*release`
-        ID=`grep -e  ^ID /etc/os-release | sed 's/ID=//g' | grep -v ID_LIKE`
-        ID_LIKE=`grep -e  ID_LIKE /etc/os-release | tr -d "A-Z_="'"' | awk '{ print $1'}`
-        VERSION=`grep -e  ^PRETTY_NAME /etc/os-release |  sed 's/PRETTY_NAME="//g'`
-
-        if [ $ID_LIKE = "debian" ]
+        if [ $ID = "debian" ] || [ $ID_LIKE = "debian" ]
         #DEBIAN
         then
-                echo "Sistema operacional compativel"
-                echo "Seu sistema operacional é $ID_LIKE versao $VERSION"
-                echo "Instalando o proxychains"
-                apt install proxychains -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
-                #dpkg -l  | grep proxychains 
-
-                PS3="Escolha uma opcao (opcao 1 recomendada por apresentar maior seguranca e facilidade): "
-                options=("Adicionar lista aleatoria de servidores proxy 1" "Definir opcoes de proxys 2" "Sair 3")
+			   validador_debian #Esta funcao validaram se o s.o é compativel
+               
+			   PS3="Escolha uma opcao (opcao 1 recomendada por apresentar maior seguranca e facilidade): "
+                options=(
+						"Adicionar lista aleatoria de servidores proxy 1" 
+						"Definir opcoes de proxys 2" 
+						"Sair 3"
+						)
+				
+				
                 select opt in "${options[@]}"
                 do
                         case $opt in
@@ -207,12 +263,11 @@ then
                 done
 
         #REDHAT
-        elif [ $ID = "rhel" ]
+        elif [ $ID_LIKE = "rhel" ]
         then
-                echo "sistema operacional compativel"
-                echo "seu sistema operacional é  $ID_LIKE versao $VERSION"
+				validador_redhat  #Esta funcao validaram se o s.o é compativel				
                 echo "iniciando a configuração do proxychays"
-                PS3="escolha uma opcao: "
+				PS3="escolha uma opcao: "
                 options=("Adicionar lista aleatoria de servidores proxy 1" "Definir opcoes de proxys 2" "Sair 3")
                 select opt in "${options[@]}"
                 do
