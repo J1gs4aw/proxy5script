@@ -42,14 +42,71 @@ ID_LIKE=`grep -e  ID_LIKE /etc/os-release | tr -d "A-Z_="'"' | awk '{ print $1'}
 VERSION=`grep -e  ^PRETTY_NAME /etc/os-release |  sed 's/PRETTY_NAME="//g'`
 VERSION_SO=`cat /etc/os-release | sed 's/ID=//g' | grep "VERSION" | tr -d "A-Z_="'"' | awk '{ print $1}' | uniq`
 
+precheck(){ #verificar se o s.o tem os requisitos minimo para seguir
+        ID=`grep -e  ^grep -e  ^ID /etc/os-release | sed 's/ID=//g' | grep -v ID_LIKE | tr -d '"'`
+        ID_LIKE=`grep -e  ID_LIKE /etc/os-release | tr -d "A-Z_="'"' | awk '{ print $1'}`
+        VERSION=`grep -e  ^PRETTY_NAME /etc/os-release |  sed 's/PRETTY_NAME="//g'`
+        VERSION_SO=`cat /etc/os-release | sed 's/ID=//g' | grep "VERSION" | tr -d "A-Z_="'"' | awk '{ print $1}' | uniq`
+        VERSION_ID=`cat /etc/os-release | grep ^VERSION_ID= | tr -d A-Z,'_=''"'` #rocky linux
+
+        if [ $ID = "debian" ] || [ $ID_LIKE = "debian" ] 
+        then 
+                echo "por favor aguarde um momento"
+        	apt update && apt install dialog proxychains curl wget -y >> /var/log/proxyfive_install.log 
+        	#apt install proxychains curl wget -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
+
+                if [ -f  /usr/bin/dialog ]
+        	then
+                        echo "Sistema compativel" 
+        	else 
+        	        echo "Desculpe ocorreu um erro, verifique no arquivo de log /var/log/proxyfive_install.log"
+        	fi
+        fi
+        ##########################################################
+        #                      CENTOS OU REDHAT 8.5
+        ##########################################################
+        if [ $ID = "rhel" ] && [ $VERSION_SO = "8.5" ];
+        then  
+        	echo "por favor aguarde um momento"
+        	yum install curl dialog wget proxychains-ng -y  >> /var/log/proxyfive_install.log
+        	check_dialog
+        ##########################################################
+        #                      CENTOS OU REDHAT 7
+        ##########################################################
+        elif [ $ID_LIKE = "rhel" ] && [ $VERSION_SO = "7" ];
+        then 
+                echo "por favor aguarde um momento"
+        	yum install curl dialog wget https://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/p/proxychains-ng-4.16-1.el7.x86_64.rpm -y 
+        	check_dialog
+        ##########################################################
+        #                      ROCKY LINUX 
+        ##########################################################
+        elif [ $ID_LIKE = "rhel" ] && [ $VERSION_ID = "8.5" ];
+        then 
+                yum install curl dialog wget proxychains-ng -y  >> /var/log/proxyfive_install.log
+                check_dialog
+        else
+        	echo "sistema não não encontrado, por favor verifique a documentação official"
+        	echo "www.proxyfive.com.br"
+        fi 
+}
+
 ## Funcoes 
 ##validar se o proxychayns foi instalado (Debian)
 
-validador_debian() 
-	{
-	echo "Sistema operacional compativel"
-    echo "Instalando o proxychains"
-    apt install proxychains curl wget -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
+check_dialog(){
+        if [ -f  /usr/bin/dialog ]
+	then
+                echo "Sistema compativel" 
+	else 
+		echo "Desculpe ocorreu um erro"
+        fi	
+}
+
+validador_debian(){
+        echo "Sistema operacional compativel"
+        echo "Instalando o proxychains"
+        apt install proxychains curl wget -y 1> /tmp/log_apt.txt  2> /tmp/log_apt_erro.txt
 	PACOTE=`dpkg -l proxychains | grep -i "proxychains" | awk '{print $2}'`
 	VERSION_PROXYCHAYNS=`dpkg -l proxychains | grep -i "proxychains" | awk '{print $3}'`
 	
@@ -60,10 +117,52 @@ validador_debian()
 		echo "Pacote n�o instalado por favor, verifique o arquivo de log /tmp/log_apt.txt"]
 	fi
 }
+
+instalador_debian(){
+        precheck #verifica se o s.o tem o dialog instalado
+	PACOTE=`dpkg -l proxychains | grep -i "proxychains" | awk '{print $2}'`
+	VERSION_PROXYCHAYNS=`dpkg -l proxychains | grep -i "proxychains" | awk '{print $3}'`
+	
+	if [[ $PACOTE = "proxychains" ]]
+	then 
+	        dialog                                          \
+   		--title 'Parabens'                              \
+   		--msgbox 'Instalacao finalizada com sucesso.'   \
+   		6 40
+
+	else 
+		tail /var/log/proxyfive_install.log > out &
+		dialog                                         \
+   		--title 'Ocorre um erro'  \
+		--tailbox out                               \
+   		0 0
+	fi
+}
+
+instalador_redhat(){
+        precheck #verifica se o s.o tem o dialog instalado
+	PACOTE_NAME=`rpm -qa --qf '%{NAME} %{VERSION}\n'   | grep proxychains | awk '{print $1}'`
+	PACOTE_VERSION=`rpm -qa --qf '%{NAME} %{VERSION}\n'   | grep proxychains | awk '{print $2}'`
+	
+	if [[ $PACOTE_NAME = "proxychains-ng" ]]
+	then 
+	        dialog                                         \
+   		--title 'Parabens'                             \
+   		--msgbox 'Instalacao finalizada com sucesso.'  \
+   		6 40
+
+	else 
+		tail  /var/log/proxyfive_install.log > out &
+		dialog                                         \
+   		--title 'Ocorreu um erro'  \
+		--tailbox out                               \
+   		0 0
+	fi
+}
+
 ##validar se o proxychayns foi instalado (Redhat)
 
-validador_redhat() 
-{		
+validador_redhat(){
 if [ $ID_LIKE = "rhel" ] && [ $VERSION_SO = "8" ];
 then 
 	echo -e "$Green Sistema operacional compativel"
@@ -108,6 +207,7 @@ then
                         0 0 0                                                   \
                         Lista       'Lista aleatoria de proxys'                 \
                         Configurar  'Definir opcoes dos proxys utilizados'      \
+                        Instalar    'Instalar proxychains'                      \
                         Sair  'Sair')
                 }
 
@@ -115,36 +215,35 @@ then
 
                 proxychains_list(){
 
-                                Nproxys=$( dialog --stdout                                              \
-                                --title 'Numero de servidores proxys'                                   \
-                                --inputbox 'digite o numero de servidore proxys que deseja utilizar:'   \
-                                0 0                                                                     \
-                                )
+                        Nproxys=$( dialog --stdout                                              \
+                        --title 'Numero de servidores proxys'                                   \
+                        --inputbox 'digite o numero de servidore proxys que deseja utilizar:'   \
+                        0 0                                                                     \
+                        )
                                 
-                                rm -f /tmp/proxychains.txt
-                                rm -f /tmp/proxychainss.txt
-                                wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies\&protocol=socks5\&timeout=10000\&country=all
-                                sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
-                                head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
-                                Nproxys=$(tail -n $Nproxys /tmp/proxychains.txt)
+                        rm -f /tmp/proxychains.txt
+                        rm -f /tmp/proxychainss.txt
+                        wget -O /tmp/proxychainss.txt https://api.proxyscrape.com/v2/?request=getproxies\&protocol=socks5\&timeout=10000\&country=all
+                        sed 's/^/socks5 /'  /tmp/proxychainss.txt | tr ':' ' ' >> /tmp/proxychains.txt
+                        head -n $Nproxys /tmp/proxychains.txt >> /etc/proxychains4.conf
+                        Nproxys=$(tail -n $Nproxys /tmp/proxychains.txt)
 
-                                dialog --stdout                 \
-                                --title 'Proxys adicionados'    \
-                                --infobox "$Nproxys"            \
-                                0 0                             \
+                        dialog --stdout                 \
+                        --title 'Proxys adicionados'    \
+                        --infobox "$Nproxys"            \
+                        0 0                             \
 
-                                sleep 3
+                        sleep 3
 
-                                rm -f /tmp/proxychains.txt
-                                rm -f /tmp/proxychainss.txt
+                        rm -f /tmp/proxychains.txt
+                        rm -f /tmp/proxychainss.txt
                                 
-                                exit
-                                }
+                        exit
+                }
 
                 proxychains_config(){
-                                while [ "$tipoProxy" != "1" ] && [ "$tipoProxy" != "2" ] && [ "$tipoProxy" != "3" ]
-                                do
-                                
+                        while [ "$tipoProxy" != "1" ] && [ "$tipoProxy" != "2" ] && [ "$tipoProxy" != "3" ]
+                        do
                                 tipoProxy=$( dialog --stdout                                                            \
                                 --title 'Tipo de servidor proxy'                                                        \
                                 --radiolist 'selecione a opcao desejada para o protocolo utilizado na comunicacao'      \
@@ -153,63 +252,62 @@ then
                                 2 'SOCKS4'    off                                                                       \
                                 3 'SOCKS5'    on                                                      
                                 )
-                                
+                                        
                                 if [ $tipoProxy -eq 1 ]
                                 then
-                                tipoProxy="http"
-                                break
+                                        tipoProxy="http"
+                                        break
 
                                 elif [ $tipoProxy -eq 2 ]
                                 then
-                                tipoProxy="socks4"
-                                break
+                                        tipoProxy="socks4"
+                                        break
 
                                 elif [ $tipoProxy -eq 3 ]
                                 then
-                                tipoProxy="socks5"
+                                        tipoProxy="socks5"
+                                        break
+                                fi
+                        done
+
+                        if [ "$tipoProxy" == "http" ]
+                        then
+                                while [ "$anomProxy" != "1" ] && [ "$anomProxy" != "2" ] && [ "$anomProxy" != "3" ] && [ "$anomProxy" != "4" ]
+                                do 
+                                
+                                anomProxy=$( dialog --stdout                                                            \
+                                --title 'Nivel da anonimidade'                                                          \
+                                --radiolist 'selecione a opcao desejada para o nivel de anonimidade da comunicacao'     \
+                                0 0 0                                                                                   \
+                                1 'TODAS'        on                                                                     \
+                                2 'ELITE'        off                                                                    \
+                                3 'ANONIMO'      off                                                                    \
+                                4 'TRANSPARENTE' off    
+                                )
+
+                                if [ $anomProxy -eq 1 ]
+                                then
+                                anomProxy="all"
+                                break
+
+                                elif [ $anomProxy -eq 2 ]
+                                then
+                                anomProxy="elite"
+                                break
+
+                                elif [ $anomProxy -eq 3 ]
+                                then
+                                anomProxy="anonymous"
+                                break
+
+                                elif [ $anomProxy -eq 4 ]
+                                then
+                                anomProxy="transparent"
                                 break
 
                                 fi
                                 done
-
-                                if [ "$tipoProxy" == "http" ]
-                                then
-                                        while [ "$anomProxy" != "1" ] && [ "$anomProxy" != "2" ] && [ "$anomProxy" != "3" ] && [ "$anomProxy" != "4" ]
-                                        do 
-                                        
-                                        anomProxy=$( dialog --stdout                                                            \
-                                        --title 'Nivel da anonimidade'                                                          \
-                                        --radiolist 'selecione a opcao desejada para o nivel de anonimidade da comunicacao'     \
-                                        0 0 0                                                                                   \
-                                        1 'TODAS'        on                                                                     \
-                                        2 'ELITE'        off                                                                    \
-                                        3 'ANONIMO'      off                                                                    \
-                                        4 'TRANSPARENTE' off    
-                                        )
-
-                                        if [ $anomProxy -eq 1 ]
-                                        then
-                                        anomProxy="all"
-                                        break
-
-                                        elif [ $anomProxy -eq 2 ]
-                                        then
-                                        anomProxy="elite"
-                                        break
-
-                                        elif [ $anomProxy -eq 3 ]
-                                        then
-                                        anomProxy="anonymous"
-                                        break
-
-                                        elif [ $anomProxy -eq 4 ]
-                                        then
-                                        anomProxy="transparent"
-                                        break
-
-                                        fi
-                                        done
-                                fi
+                        fi
 
                                 if [ "$tipoProxy" == "http" ]
                                 then
@@ -258,28 +356,24 @@ then
 
                                         dialog --stdout                 \
                                         --title 'Atencao!'    \
-                                        --yesno "\n tipo do proxy: $tipoProxy \n utiliza ssl: $SSLproxy \n nivel de anonimidade: $anomProxy \n limite de ping: $pingProxy \n \n confirma as info acima? \n"            \
+                                        --yesno "\n tipo do proxy: $tipoProxy \n utiliza ssl: $SSLproxy \n nivel de anonimidade: $anomProxy \n limite de ping: $pingProxy \n \n confirma as informacoes acima? \n"            \
                                         0 0                             \
                                         
                                         confirm=$?
 
                                         if [ "$confirm" == 0 ]
                                         then
-
-                                        proxychains_list
+                                                proxychains_list
 
                                         elif [ "$confirm" == 1 ]
                                         then
+                                                dialog --stdout         \
+                                                --title 'Atencao!'      \
+                                                --infobox 'Saindo...'   \
+                                                0 0
 
-                                        dialog --stdout         \
-                                        --title 'Atencao!'      \
-                                        --infobox 'Saindo...'   \
-                                        0 0
-
-                                        sleep 1
-
-                                        exit
-
+                                                sleep 1
+                                                exit
                                         fi
 
                                 fi
@@ -298,29 +392,47 @@ then
                 }
 
         if [ "$escolha" = 'Lista' ]
-                then  
-                        echo "ESCOLHEU LISTA AUTOMATIZADOR"
-                        proxychains_list
-                fi
-
-                if [ "$escolha" = 'Configurar' ]
-                then  
-                        echo "ESCOLHEU CONFIGURAR OS PROXYS"
-                        proxychains_config
-
-                fi
-
-                if [ "$escolha" = 'Sair' ]
+        then  
+                echo "ESCOLHEU LISTA AUTOMATIZADOR"
+                proxychains_list
+        fi
+        
+        if [ "$escolha" = 'Configurar' ]
+        then  
+                echo "ESCOLHEU CONFIGURAR OS PROXYS"
+                proxychains_config
+        fi
+        
+        if [ "$escolha" = 'Instalar' ]
+        then
+                if [ $ID = "debian" ] || [ $ID_LIKE = "debian" ]; 
+                then 
+                        instalador_debian
+                elif [ $ID = "rhel" ] && [ $VERSION_SO = "8.5" ];
                 then
+                        instalador_redhat
+                elif [ $ID = "rhel" ] && [ $VERSION_SO = "8.5" ];
+                then 
+                        instalador_redhat
 
-                        dialog --stdout         \
-                        --title 'Atencao!'      \
-                        --infobox 'Saindo...'   \
-                        0 0
-                        sleep 1                 
-                        
-                        exit
+                elif [ $ID_LIKE = "rhel" ] && [ $VERSION_SO = "7" ];
+                then 
+                        instalador_redhat
+                else 
+                        echo "Desculpe ocorreu um erro"
                 fi
+        fi
+
+        if [ "$escolha" = 'Sair' ]
+        then
+                dialog --stdout         \
+                --title 'Atencao!'      \
+                --infobox 'Saindo...'   \
+                0 0
+                sleep 1                 
+                
+                exit
+        fi
 
         #REDHAT
         elif [ $ID_LIKE = "rhel" ]
