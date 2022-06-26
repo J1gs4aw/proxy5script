@@ -383,6 +383,7 @@ then
         #Main menu options
         if [ "$escolha" = 'Lista' ]
         then
+                if 
                 sed -i 's/strict_chain/#strict_chain/' /etc/proxychains4.conf
                 sed -i 's/#dynamic_chain/dynamic_chain/' /etc/proxychains4.conf
                 proxychains_list
@@ -409,6 +410,9 @@ then
                 else 
                         echo "Desculpe ocorreu um erro"
                 fi
+		
+		#after install, change the default socks4 tor route to socks5
+                sed -r 's/socks4 127.0.0.1 9050/socks5 127.0.0.1 9050/' /etc/proxychains4.conf
         fi
 
         if [ "$escolha" = 'Sair' ]
