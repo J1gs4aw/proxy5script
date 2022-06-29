@@ -382,8 +382,7 @@ then
         
         #Main menu options
         if [ "$escolha" = 'Lista' ]
-        then
-                if 
+        then 
                 sed -i 's/strict_chain/#strict_chain/' /etc/proxychains4.conf
                 sed -i 's/#dynamic_chain/dynamic_chain/' /etc/proxychains4.conf
                 proxychains_list
